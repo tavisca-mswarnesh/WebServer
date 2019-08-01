@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using System.Net;
 using System.Text;
 using System.Threading;
@@ -8,13 +7,13 @@ namespace ExampleSimpleWebserver
 {
     class HttpAsyncServer
     {
-        private string listenedAddress;
+        //private string listenedAddress;
         private bool isWorked;
         private HttpListener listener;
-
-        public HttpAsyncServer(string listenedAddress)
+        private Listener _server;
+        public HttpAsyncServer(Listener server)
         {
-            this.listenedAddress = listenedAddress;
+            _server = server;
             isWorked = false;
         }
 
@@ -22,10 +21,8 @@ namespace ExampleSimpleWebserver
 
         private void work()
         {
-            listener = new HttpListener();
-            listener.Prefixes.Add(listenedAddress);
-
-            listener.Start();
+            _server.start();
+            listener = _server.GetListener();
 
             while (isWorked)
             {
@@ -37,9 +34,8 @@ namespace ExampleSimpleWebserver
                     Console.WriteLine(fileName);
                     try
                     {
-                        FileStream fileStream = new FileStream(fileName, FileMode.Open, FileAccess.Read);
-                        byte[] buffer = File.ReadAllBytes(fileName);
-                        fileStream.Read(buffer, 0, Convert.ToInt32(fileStream.Length));
+                        FileParser fileParser = new FileParser(fileName);
+                        byte[] buffer =fileParser.Parse();
                         context.Response.ContentLength64 = buffer.Length;
                         System.IO.Stream output = context.Response.OutputStream;
                         output.Write(buffer, 0, buffer.Length);
@@ -48,9 +44,8 @@ namespace ExampleSimpleWebserver
                     catch (Exception)
                     {
 
-                        FileStream fileStream = new FileStream("NotFound.html", FileMode.Open, FileAccess.Read);
-                        byte[] buffer = File.ReadAllBytes("NotFound.html");
-                        fileStream.Read(buffer, 0, Convert.ToInt32(fileStream.Length));
+                        FileParser fileParser = new FileParser(fileName);
+                        byte[] buffer = fileParser.Parse();
                         context.Response.ContentLength64 = buffer.Length;
                         System.IO.Stream output = context.Response.OutputStream;
                         output.Write(buffer, 0, buffer.Length);
@@ -93,4 +88,5 @@ namespace ExampleSimpleWebserver
         }
 
     }
+    
 }
